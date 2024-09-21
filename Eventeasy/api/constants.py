@@ -1,6 +1,3 @@
-
-
-
 class ReactUrl:
       REACT_URL = 'eventeasy.com'
 
