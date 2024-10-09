@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions, status
-from .models import Category, Service, Order, UserAccount, CartItem, Cart, OrderItem
-from .serializers import CategorySerializer, ServiceSerializer, OrderSerializer, UserAccountSerializer, CartSerializer
+from .models import Category, Service, Order, UserAccount, OrderItem
+from .serializers import CategorySerializer, ServiceSerializer, OrderSerializer, UserAccountSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -49,70 +49,70 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
         
-class CartViewSet(viewsets.ModelViewSet):
-    queryset = Cart.objects.none()
-    serializer_class = CartSerializer
-    permission_classes = [IsAuthenticated]
+# class CartViewSet(viewsets.ModelViewSet):
+#     queryset = Cart.objects.none()
+#     serializer_class = CartSerializer
+#     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Cart.objects.filter(user=self.request.user)
+#     def get_queryset(self):
+#         return Cart.objects.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+#     def perform_create(self, serializer):
+#         serializer.save(user=self.request.user)
 
-    @action(detail=True, methods=['post'])
-    def add_to_cart(self, request, pk=None):
-        cart = self.get_object()
-        service_id = request.data.get('service')
-        quantity = int(request.data.get('quantity', 1))
+#     @action(detail=True, methods=['post'])
+#     def add_to_cart(self, request, pk=None):
+#         cart = self.get_object()
+#         service_id = request.data.get('service')
+#         quantity = int(request.data.get('quantity', 1))
 
-        service = get_object_or_404(Service, id=service_id)
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            service=service,
-            defaults={'quantity': quantity}
-        )
+#         service = get_object_or_404(Service, id=service_id)
+#         cart_item, created = CartItem.objects.get_or_create(
+#             cart=cart,
+#             service=service,
+#             defaults={'quantity': quantity}
+#         )
 
-        if not created:
-            cart_item.quantity += quantity
-            cart_item.save()
+#         if not created:
+#             cart_item.quantity += quantity
+#             cart_item.save()
 
-        serializer = self.get_serializer(cart)
-        return Response(serializer.data)
+#         serializer = self.get_serializer(cart)
+#         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
-    def remove_from_cart(self, request, pk=None):
-        cart = self.get_object()
-        cart_item_id = request.data.get('cart_item_id')
+#     @action(detail=True, methods=['post'])
+#     def remove_from_cart(self, request, pk=None):
+#         cart = self.get_object()
+#         cart_item_id = request.data.get('cart_item_id')
 
-        cart_item = get_object_or_404(CartItem, id=cart_item_id, cart=cart)
-        cart_item.delete()
+#         cart_item = get_object_or_404(CartItem, id=cart_item_id, cart=cart)
+#         cart_item.delete()
 
-        serializer = self.get_serializer(cart)
-        return Response(serializer.data)
+#         serializer = self.get_serializer(cart)
+#         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
-    def checkout(self, request, pk=None):
-        cart = self.get_object()
+#     @action(detail=True, methods=['post'])
+#     def checkout(self, request, pk=None):
+#         cart = self.get_object()
         
-        if not cart.items.exists():
-            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+#         if not cart.items.exists():
+#             return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        order = Order.objects.create(
-            user=request.user,
-            total_price=cart.total_price
-        )
+#         order = Order.objects.create(
+#             user=request.user,
+#             total_price=cart.total_price
+#         )
 
-        for cart_item in cart.items.all():
-            OrderItem.objects.create(
-                order=order,
-                service=cart_item.service,
-                quantity=cart_item.quantity,
-                price=cart_item.service.price
-            )
+#         for cart_item in cart.items.all():
+#             OrderItem.objects.create(
+#                 order=order,
+#                 service=cart_item.service,
+#                 quantity=cart_item.quantity,
+#                 price=cart_item.service.price
+#             )
 
-        cart.items.all().delete()
+#         cart.items.all().delete()
 
-        order_serializer = OrderSerializer(order)
-        return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+#         order_serializer = OrderSerializer(order)
+#         return Response(order_serializer.data, status=status.HTTP_201_CREATED)
 

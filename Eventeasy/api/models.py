@@ -63,34 +63,77 @@ class Service(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='services')
+    image = models.ImageField(upload_to='service_images/', blank=True, null=True)
     
 
     def __str__(self):
         return self.name
 
-class Cart(models.Model):
-    user = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name='cart')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# class Cart(models.Model):
+#     user = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name='cart')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"Cart for {self.user.email}"
+#     def __str__(self):
+#         return f"Cart for {self.user.email}"
 
-    @property
-    def total_price(self):
-        return sum(item.total_price for item in self.items.all())
+#     @property
+#     def total_price(self):
+#         return sum(item.total_price for item in self.items.all())
 
-class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
+# class CartItem(models.Model):
+#     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+#     service = models.ForeignKey(Service, on_delete=models.CASCADE)
+#     quantity = models.PositiveIntegerField(default=1)
 
-    def __str__(self):
-        return f"{self.quantity} x {self.service.name} in cart for {self.cart.user.email}"
+#     def __str__(self):
+#         return f"{self.quantity} x {self.service.name} in cart for {self.cart.user.email}"
 
-    @property
-    def total_price(self):
-        return self.service.price * self.quantity
+#     @property
+#     def total_price(self):
+#         return self.service.price * self.quantity
+
+# class Order(models.Model):
+#     ORDER_STATUS_CHOICES = [
+#         ('PENDING', 'Pending'),
+#         ('PROCESSING', 'Processing'),
+#         ('COMPLETED', 'Completed'),
+#         ('CANCELLED', 'Cancelled'),
+#     ]
+
+#     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='orders')
+#     total_price = models.DecimalField(max_digits=10, decimal_places=2)
+#     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='PENDING')
+#     location = models.CharField(max_length=100, default='Nairobi')
+#     telephone = models.CharField(max_length=15, default='0712345678')
+#     date = models.DateField(default='2022-01-01')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         return f"Order {self.id} by {self.user.email}"
+
+# class OrderItem(models.Model):
+#     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+#     service = models.ForeignKey(Service, on_delete=models.CASCADE)
+#     quantity = models.PositiveIntegerField(default=1)
+#     price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at the time of order
+
+#     def __str__(self):
+#         return f"{self.quantity} x {self.service.name} in order {self.order.id}"
+
+#     @property
+#     def total_price(self):
+#         return self.price * self.quantity
+
+# class Service(models.Model):
+#     name = models.CharField(max_length=255)
+#     description = models.TextField()
+#     price = models.DecimalField(max_digits=10, decimal_places=2)
+#     category = models.IntegerField()
+
+#     def __str__(self):
+#         return self.name
 
 class Order(models.Model):
     ORDER_STATUS_CHOICES = [
@@ -99,25 +142,26 @@ class Order(models.Model):
         ('COMPLETED', 'Completed'),
         ('CANCELLED', 'Cancelled'),
     ]
-
+    event_type = models.CharField(max_length=100, default="Others")
     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='orders')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    telephone = models.CharField(max_length=15)
+    location = models.CharField(max_length=255)
+    date = models.DateField()
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='PENDING')
+    paid = models.BooleanField(default=False)
+    mpesa_code = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Order {self.id} by {self.user.email}"
+        return f"Order {self.id} - {self.user.email}"
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at the time of order
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f"{self.quantity} x {self.service.name} in order {self.order.id}"
-
-    @property
-    def total_price(self):
-        return self.price * self.quantity
+        return f"{self.quantity} x {self.service.name} for Order {self.order.id}"

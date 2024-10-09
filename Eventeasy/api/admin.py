@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Service, Order, UserAccount, Cart, CartItem, OrderItem
+from .models import Category, Service, Order, UserAccount, OrderItem
 
 # Category Admin
 @admin.register(Category)
@@ -35,23 +35,23 @@ class UserAccountAdmin(admin.ModelAdmin):
     list_per_page = 25
 
 # CartItem Inline (to view in the Cart page)
-class CartItemInline(admin.TabularInline):
-    model = CartItem
-    extra = 1
+# class CartItemInline(admin.TabularInline):
+#     model = CartItem
+#     extra = 1
 
-# Cart Admin
-@admin.register(Cart)
-class CartAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'created_at')
-    inlines = [CartItemInline]
-    ordering = ('-created_at',)
-    list_per_page = 25
+# # Cart Admin
+# @admin.register(Cart)
+# class CartAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'user', 'created_at')
+#     inlines = [CartItemInline]
+#     ordering = ('-created_at',)
+#     list_per_page = 25
 
-# CartItem Admin
-@admin.register(CartItem)
-class CartItemAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cart', 'service', 'quantity')
-    list_per_page = 25
+# # CartItem Admin
+# @admin.register(CartItem)
+# class CartItemAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'cart', 'service', 'quantity')
+#     list_per_page = 25
 
 # OrderItem Admin
 @admin.register(OrderItem)

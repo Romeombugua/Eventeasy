@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, ServiceViewSet, OrderViewSet, UserAccountViewSet, CartViewSet
+from .views import CategoryViewSet, ServiceViewSet, OrderViewSet, UserAccountViewSet
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -21,7 +21,7 @@ router.register(r'users', UserAccountViewSet)
 router.register(r'categories', CategoryViewSet)
 router.register(r'services', ServiceViewSet)
 router.register(r'orders', OrderViewSet)
-router.register(r'carts', CartViewSet, basename='cart')
+# router.register(r'carts', CartViewSet, basename='cart')
 
 urlpatterns = [
     path('', include(router.urls)),
