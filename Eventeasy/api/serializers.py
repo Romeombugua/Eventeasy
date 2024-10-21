@@ -44,37 +44,37 @@ class ServiceSerializer(serializers.ModelSerializer):
 #         fields = ('id', 'items', 'total_price')
         
 class OrderItemSerializer(serializers.ModelSerializer):
-    service = ServiceSerializer()
+    service = serializers.PrimaryKeyRelatedField(queryset=Service.objects.all())
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = OrderItem
         fields = ('id', 'service', 'quantity', 'price', 'total_price')
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['service'] = ServiceSerializer(instance.service).data
+        return representation
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())  # Use user ID reference
-
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = Order
-        fields = ('id', 'user', 'items','event_type','paid','mpesa_code', 'total_price','telephone','location','date','status')
-        
+        fields = ('id', 'user', 'items', 'event_type', 'paid', 'mpesa_code', 'taken_by_provider', 'total_price', 'telephone', 'location', 'date', 'status')
+
     def create(self, validated_data):
         items_data = validated_data.pop('items')
         order = Order.objects.create(**validated_data)
 
         for item_data in items_data:
             try:
-                # Parse service data
-                service_data = item_data.pop('service')
-                service, _ = Service.objects.get_or_create(**service_data)
-
-                # Ensure price is a valid decimal
+                # The service field now contains just the ID
+                service_id = item_data['service'].id
                 item_data['price'] = Decimal(item_data['price'])
 
-                # Create the OrderItem
-                OrderItem.objects.create(order=order, service=service, **item_data)
+                OrderItem.objects.create(order=order, service_id=service_id, **item_data)
 
             except InvalidOperation:
                 raise serializers.ValidationError("Invalid price format.")

@@ -1,5 +1,5 @@
 class ReactUrl:
-      REACT_URL = 'eventeasy.com'
+      REACT_URL = 'eventeasykenya.com'
 
 class SiteName:
      SITE_NAME = "EventEasy"
