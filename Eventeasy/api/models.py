@@ -32,9 +32,7 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     location = models.CharField(max_length=100, blank=True)
     role = models.CharField(max_length=20, choices=[
         ('CLIENT', 'Client'),
-        ('PHOTOGRAPHER', 'Photographer'),
-        ('VIDEOGRAPHER', 'Videographer'),
-        ('CATERER', 'Caterer'),
+        ('PROVIDER', 'Provider'),
     ], default='CLIENT')
 
     objects = UserAccountManager()
