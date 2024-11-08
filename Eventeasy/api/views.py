@@ -59,8 +59,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         elif user.role == 'PROVIDER':
             # Providers can see unclaimed orders and their own claimed orders
             return Order.objects.filter(
-                Q(provider__isnull=True) |  # Unclaimed orders
-                Q(provider=user)  # Orders claimed by this provider
+                Q(provider__isnull=True) 
+                # |  # Unclaimed orders
+                # Q(provider=user)  # Orders claimed by this provider
             )
         return Order.objects.none()
 
@@ -123,6 +124,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(order)
         return Response(serializer.data)
     
+    @action(detail=False, methods=['GET'])
+    def my_gigs(self, request):
+        user = request.user
+        if user.role != 'PROVIDER':
+            return Response(
+                {"error": "You need to be a provider to view this page"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        else:
+            orders = Order.objects.filter(provider=user)
+            serializer = self.get_serializer(orders, many=True)
+            return Response(serializer.data)
 
 
         
