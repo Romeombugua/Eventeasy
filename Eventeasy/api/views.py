@@ -1,16 +1,32 @@
 from rest_framework import viewsets, permissions, status
 from .models import Category, Service, Order, UserAccount, OrderItem
-from .serializers import CategorySerializer, ServiceSerializer, OrderSerializer, UserAccountSerializer
+from .serializers import CategorySerializer, ServiceSerializer, OrderSerializer, UserCreateSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user(request):
+    serializer = UserCreateSerializer(data=request.data)
+    if serializer.is_valid():
+        print("Valid data received:", serializer.validated_data)  # Debug print
+        user = serializer.save()
+        return Response({
+            'user': UserCreateSerializer(user).data,
+            'message': 'User created successfully'
+        }, status=status.HTTP_201_CREATED)
+    print("Validation errors:", serializer.errors)  # Debug print
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserAccountViewSet(viewsets.ModelViewSet):
     queryset = UserAccount.objects.all()
-    serializer_class = UserAccountSerializer
+    serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -40,12 +56,73 @@ class OrderViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.role == 'CLIENT':
             return Order.objects.filter(user=user)
-        elif user.role in ['PHOTOGRAPHER', 'VIDEOGRAPHER', 'CATERER']:
-            return Order.objects.filter(service__provider=user)
+        elif user.role == 'PROVIDER':
+            # Providers can see unclaimed orders and their own claimed orders
+            return Order.objects.filter(
+                Q(provider__isnull=True) |  # Unclaimed orders
+                Q(provider=user)  # Orders claimed by this provider
+            )
         return Order.objects.none()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(detail=True, methods=['POST'])
+    def claim_order(self, request, pk=None):
+        order = self.get_object()
+        user = request.user
+
+        # Check if user is a provider
+        if user.role != 'PROVIDER':
+            return Response(
+                {"error": "Only providers can claim orders"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check if order is already claimed
+        if order.provider is not None:
+            return Response(
+                {"error": "This order has already been claimed"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if order is in PENDING status
+        if order.status != 'PENDING':
+            return Response(
+                {"error": "Only pending orders can be claimed"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Claim the order
+        order.provider = user
+        order.taken_by_provider = True
+        order.status = 'PROCESSING'
+        order.save()
+
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['POST'])
+    def release_order(self, request, pk=None):
+        order = self.get_object()
+        user = request.user
+
+        # Check if this provider owns the order
+        if order.provider != user:
+            return Response(
+                {"error": "You can only release orders you have claimed"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Release the order
+        order.provider = None
+        order.taken_by_provider = False
+        order.status = 'PENDING'
+        order.save()
+
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
+    
 
 
         

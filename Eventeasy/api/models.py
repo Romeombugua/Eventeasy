@@ -142,6 +142,7 @@ class Order(models.Model):
     ]
     event_type = models.CharField(max_length=100, default="Others")
     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='orders')
+    provider = models.ForeignKey(UserAccount, on_delete=models.SET_NULL, null=True, blank=True, related_name='claimed_orders')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     paid = models.BooleanField(default=False)
     mpesa_code = models.CharField(max_length=10, blank=True)

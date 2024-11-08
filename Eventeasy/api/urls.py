@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, ServiceViewSet, OrderViewSet, UserAccountViewSet
+from .views import CategoryViewSet, ServiceViewSet, OrderViewSet, UserAccountViewSet, register_user
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -24,6 +24,7 @@ router.register(r'orders', OrderViewSet)
 # router.register(r'carts', CartViewSet, basename='cart')
 
 urlpatterns = [
+    path('auth/register/', register_user, name='register-user'),
     path('', include(router.urls)),
 ]
 urlpatterns += [
